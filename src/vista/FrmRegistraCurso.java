@@ -1,23 +1,24 @@
 package vista;
 
 import java.awt.EventQueue;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-import entidad.Curso;
-import model.CursoModel;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.time.LocalDate;
 
+import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.UIManager;
-import java.awt.Font;
-import javax.swing.SwingConstants;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.JButton;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
+
+import entidad.Curso;
+import model.CursoModel;
+import util.ValidateUtil;
 
 public class FrmRegistraCurso extends JFrame implements ActionListener {
 
@@ -48,7 +49,7 @@ public class FrmRegistraCurso extends JFrame implements ActionListener {
     }
 
     public FrmRegistraCurso() {
-        setTitle("Rodrigo Padilla - Evaluación T1");
+    	setTitle("Rodrigo Padilla - Evaluación T2");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 480, 520);
         contentPane = new JPanel();
@@ -104,11 +105,37 @@ public class FrmRegistraCurso extends JFrame implements ActionListener {
         String precioStr = txtPrecio.getText().trim();
         String duracionStr = txtDuracion.getText().trim();
 
-        if (nombre.isEmpty() || descripcion.isEmpty() || docente.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, complete los campos principales.");
+        // --- SISTEMA DE VALIDACIONES CON REGEX ---
+        if (!nombre.matches(ValidateUtil.TEXTO_40)) {
+            JOptionPane.showMessageDialog(this, "El nombre es inválido. Use solo letras (máx. 40 caracteres).");
+            return;
+        }
+        if (!descripcion.matches(ValidateUtil.TEXTO_NUM_100)) {
+            JOptionPane.showMessageDialog(this, "La descripción contiene caracteres no permitidos o es muy larga.");
+            return;
+        }
+        if (!horario.matches(ValidateUtil.TEXTO_NUM_100)) {
+            JOptionPane.showMessageDialog(this, "El horario contiene caracteres no permitidos.");
+            return;
+        }
+        if (!docente.matches(ValidateUtil.TEXTO_40)) {
+            JOptionPane.showMessageDialog(this, "El docente es inválido. Use solo letras (máx. 40 caracteres).");
+            return;
+        }
+        if (!fechaInicio.matches(ValidateUtil.DATE_YYYY_MM_DD) || !fechaFin.matches(ValidateUtil.DATE_YYYY_MM_DD)) {
+            JOptionPane.showMessageDialog(this, "Error en fecha. Revise que exista y use el formato YYYY-MM-DD.");
+            return;
+        }
+        if (!precioStr.matches(ValidateUtil.NUM_DECIMAL)) {
+            JOptionPane.showMessageDialog(this, "Precio inválido. Ingrese un valor numérico (ej: 150 o 150.50).");
+            return;
+        }
+        if (!duracionStr.matches(ValidateUtil.NUM_ENTERO)) {
+            JOptionPane.showMessageDialog(this, "Duración inválida. Ingrese la cantidad de meses en números enteros.");
             return;
         }
 
+        // --- REGISTRO EN LA BASE DE DATOS ---
         try {
             Curso obj = new Curso();
             obj.setNombre(nombre);
@@ -132,10 +159,9 @@ public class FrmRegistraCurso extends JFrame implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Error al registrar el curso en la base de datos.");
             }
             
-        } catch (DateTimeParseException ex) {
-            JOptionPane.showMessageDialog(this, "Error en fecha. Use el formato YYYY-MM-DD");
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Error en Precio o Duración. Ingrese solo números.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Ocurrió un error inesperado en el sistema.");
+            ex.printStackTrace();
         }
     }
 }
