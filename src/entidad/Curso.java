@@ -1,11 +1,9 @@
 package entidad;
 
 import java.time.LocalDate;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class Curso {
     private int idCurso;
     private String nombre;
@@ -16,4 +14,5 @@ public class Curso {
     private LocalDate fechaFin;
     private double precio;
     private int duracion;
+    private int estado; 
 }

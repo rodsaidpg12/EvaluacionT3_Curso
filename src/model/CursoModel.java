@@ -2,11 +2,11 @@ package model;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import entidad.Curso;
-import util.MySqlDBConexion;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import entidad.Curso;
+import util.MySqlDBConexion;
 
 public class CursoModel {
 
@@ -14,12 +14,10 @@ public class CursoModel {
         int salida = -1;
         Connection conn = null;
         PreparedStatement pstm = null;
-        
         try {
             conn = MySqlDBConexion.getConexion();
-            String sql = "INSERT INTO curso (nombre, descripcion, horario, docente, fechaInicio, fechaFin, precio, duracion) VALUES (?,?,?,?,?,?,?,?)";
+            String sql = "INSERT INTO curso (nombre, descripcion, horario, docente, fechaInicio, fechaFin, precio, duracion, estado) VALUES (?,?,?,?,?,?,?,?,1)";
             pstm = conn.prepareStatement(sql);
-            
             pstm.setString(1, obj.getNombre());
             pstm.setString(2, obj.getDescripcion());
             pstm.setString(3, obj.getHorario());
@@ -28,22 +26,90 @@ public class CursoModel {
             pstm.setDate(6, java.sql.Date.valueOf(obj.getFechaFin()));
             pstm.setDouble(7, obj.getPrecio());
             pstm.setInt(8, obj.getDuracion());
-
             salida = pstm.executeUpdate();
-            
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (pstm != null) pstm.close();
-                if (conn != null) conn.close();
-            } catch (Exception e2) {
-                e2.printStackTrace();
-            }
+            try { if (pstm != null) pstm.close(); if (conn != null) conn.close(); } catch (Exception e2) {}
         }
         return salida;
     }
-    
+
+    public List<Curso> listarTodos() {
+        List<Curso> lista = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstm = null;
+        ResultSet rs = null;
+        try {
+            conn = MySqlDBConexion.getConexion();
+            String sql = "SELECT * FROM curso WHERE estado = 1";
+            pstm = conn.prepareStatement(sql);
+            rs = pstm.executeQuery();
+            while (rs.next()) {
+                Curso obj = new Curso();
+                obj.setIdCurso(rs.getInt("idCurso"));
+                obj.setNombre(rs.getString("nombre"));
+                obj.setDescripcion(rs.getString("descripcion"));
+                obj.setHorario(rs.getString("horario"));
+                obj.setDocente(rs.getString("docente"));
+                obj.setFechaInicio(rs.getDate("fechaInicio").toLocalDate());
+                obj.setFechaFin(rs.getDate("fechaFin").toLocalDate());
+                obj.setPrecio(rs.getDouble("precio"));
+                obj.setDuracion(rs.getInt("duracion"));
+                obj.setEstado(rs.getInt("estado"));
+                lista.add(obj);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try { if (rs != null) rs.close(); if (pstm != null) pstm.close(); if (conn != null) conn.close(); } catch (Exception e2) {}
+        }
+        return lista;
+    }
+
+    public int actualizaCurso(Curso obj) {
+        int salida = -1;
+        Connection conn = null;
+        PreparedStatement pstm = null;
+        try {
+            conn = MySqlDBConexion.getConexion();
+            String sql = "UPDATE curso SET nombre=?, descripcion=?, horario=?, docente=?, fechaInicio=?, fechaFin=?, precio=?, duracion=? WHERE idCurso=?";
+            pstm = conn.prepareStatement(sql);
+            pstm.setString(1, obj.getNombre());
+            pstm.setString(2, obj.getDescripcion());
+            pstm.setString(3, obj.getHorario());
+            pstm.setString(4, obj.getDocente());
+            pstm.setDate(5, java.sql.Date.valueOf(obj.getFechaInicio()));
+            pstm.setDate(6, java.sql.Date.valueOf(obj.getFechaFin()));
+            pstm.setDouble(7, obj.getPrecio());
+            pstm.setInt(8, obj.getDuracion());
+            pstm.setInt(9, obj.getIdCurso());
+            salida = pstm.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try { if (pstm != null) pstm.close(); if (conn != null) conn.close(); } catch (Exception e2) {}
+        }
+        return salida;
+    }
+
+    public int eliminaCurso(int idCurso) {
+        int salida = -1;
+        Connection conn = null;
+        PreparedStatement pstm = null;
+        try {
+            conn = MySqlDBConexion.getConexion();
+            String sql = "UPDATE curso SET estado = 0 WHERE idCurso = ?";
+            pstm = conn.prepareStatement(sql);
+            pstm.setInt(1, idCurso);
+            salida = pstm.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try { if (pstm != null) pstm.close(); if (conn != null) conn.close(); } catch (Exception e2) {}
+        }
+        return salida;
+    }
     public List<Curso> consultaPorNombreYDocente(String filtroNombre, String filtroDocente) {
         List<Curso> lista = new ArrayList<>();
         Connection conn = null;
@@ -52,7 +118,8 @@ public class CursoModel {
         
         try {
             conn = MySqlDBConexion.getConexion();
-            String sql = "SELECT * FROM curso WHERE nombre LIKE ? AND docente LIKE ?";
+            // Se agregó "AND estado = 1" para buscar solo los cursos activos
+            String sql = "SELECT * FROM curso WHERE nombre LIKE ? AND docente LIKE ? AND estado = 1";
             pstm = conn.prepareStatement(sql);
             
             pstm.setString(1, "%" + filtroNombre + "%");
@@ -77,6 +144,7 @@ public class CursoModel {
                 
                 obj.setPrecio(rs.getDouble("precio"));
                 obj.setDuracion(rs.getInt("duracion"));
+                obj.setEstado(rs.getInt("estado"));
                 
                 lista.add(obj);
             }
